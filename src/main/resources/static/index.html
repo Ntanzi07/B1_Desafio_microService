@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Front simples - V2</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+    <h1>Plataforma de cursos - versão 2</h1>
+    <p>Login HTTP Basic usado no front: <strong>admin / 123456</strong></p>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Criar usuário</h2>
+            <input id="nome" placeholder="Nome">
+            <input id="email" placeholder="E-mail">
+            <input id="senha" type="password" placeholder="Senha">
+            <button onclick="criarUsuario()">Salvar usuário</button>
+            <button onclick="listarUsuarios()">Listar usuários</button>
+            <ul id="usuarios"></ul>
+        </div>
+
+        <div class="card">
+            <h2>Criar curso</h2>
+            <input id="tituloCurso" placeholder="Título do curso">
+            <textarea id="descricaoCurso" placeholder="Descrição"></textarea>
+            <button onclick="criarCurso()">Salvar curso</button>
+            <button onclick="listarCursos()">Listar cursos</button>
+            <ul id="cursos"></ul>
+        </div>
+    </div>
+
+    <div class="grid" style="margin-top:24px;">
+        <div class="card">
+            <h2>Matricular usuário</h2>
+            <input id="matUsuarioId" placeholder="ID do usuário">
+            <input id="matCursoId" placeholder="ID do curso">
+            <select id="matBonus">
+                <option value="false">Curso normal</option>
+                <option value="true">Curso bônus</option>
+            </select>
+            <button onclick="matricular()">Matricular</button>
+        </div>
+
+        <div class="card">
+            <h2>Concluir matrícula</h2>
+            <input id="matriculaId" placeholder="ID da matrícula">
+            <input id="notaFinal" placeholder="Nota final">
+            <button onclick="concluirMatricula()">Concluir</button>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+        <h2>Consultar matrículas por usuário</h2>
+        <input id="consultaUsuarioId" placeholder="ID do usuário">
+        <button onclick="listarMatriculasUsuario()">Listar matrículas</button>
+        <ul id="matriculas"></ul>
+    </div>
+
+    <p><a href="/swagger-ui/index.html" target="_blank">Abrir Swagger</a></p>
+    <p><a href="/home" target="_blank">Abrir /home</a></p>
+</div>
+<script src="/js/app.js"></script>
+</body>
+</html>
