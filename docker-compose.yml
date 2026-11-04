@@ -1,21 +1,19 @@
-version: "3.9"
-
 services:
-  postgres:
+  core-postgres:
     image: postgres:16
-    container_name: usuario-postgres
-    hostname: postgres
+    container_name: core-postgres
+    hostname: core-postgres
     restart: always
     environment:
-      POSTGRES_DB: usuario_db
+      POSTGRES_DB: core_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - core_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d usuario_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d core_db"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -23,14 +21,14 @@ services:
     networks:
       app_net:
         aliases:
-          - postgres
+          - core-postgres
 
-  pgadmin:
+  core-pgadmin:
     image: dpage/pgadmin4:9
-    container_name: usuario-pgadmin
+    container_name: core-pgadmin
     restart: always
     depends_on:
-      postgres:
+      core-postgres:
         condition: service_healthy
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
@@ -39,30 +37,95 @@ services:
     ports:
       - "5050:80"
     volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - core_pgadmin_data:/var/lib/pgadmin
     networks:
       - app_net
 
-  app:
-    build: .
-    container_name: usuario-api-app
+  ranking-postgres:
+    image: postgres:16
+    container_name: ranking-postgres
+    hostname: ranking-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ranking_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - ranking_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ranking_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      app_net:
+        aliases:
+          - ranking-postgres
+
+  ranking-pgadmin:
+    image: dpage/pgadmin4:9
+    container_name: ranking-pgadmin
     restart: always
     depends_on:
-      postgres:
+      ranking-postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5051:80"
+    volumes:
+      - ranking_pgadmin_data:/var/lib/pgadmin
+    networks:
+      - app_net
+
+  core:
+    build: ./core-service
+    container_name: core-api
+    restart: always
+    depends_on:
+      core-postgres:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: postgres
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/usuario_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://core-postgres:5432/core_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      RANKING_SERVICE_USER: ${RANKING_SERVICE_USER}
+      RANKING_SERVICE_PASSWORD: ${RANKING_SERVICE_PASSWORD}
     ports:
       - "8080:8080"
     networks:
       - app_net
 
+  ranking:
+    build: ./ranking-service
+    container_name: ranking-api
+    restart: always
+    depends_on:
+      ranking-postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ranking-postgres:5432/ranking_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      RANKING_SERVICE_USER: ${RANKING_SERVICE_USER}
+      RANKING_SERVICE_PASSWORD: ${RANKING_SERVICE_PASSWORD}
+    ports:
+      - "8081:8081"
+    networks:
+      - app_net
+
 volumes:
-  postgres_data:
-  pgadmin_data:
+  ranking_postgres_data:
+  core_postgres_data:
+  core_pgadmin_data:
+  ranking_pgadmin_data:
 
 networks:
   app_net:

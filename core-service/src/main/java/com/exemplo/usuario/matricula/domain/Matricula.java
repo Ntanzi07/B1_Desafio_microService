@@ -1,5 +1,7 @@
 package com.exemplo.usuario.matricula.domain;
 
+import com.exemplo.usuario.curso.domain.Curso;
+import com.exemplo.usuario.usuario.domain.Usuario;
 import jakarta.persistence.*;
 
 // Camada: DOMINIO.

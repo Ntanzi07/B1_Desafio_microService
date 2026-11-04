@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.exemplo</groupId>
-    <artifactId>b1-monolito-modular</artifactId>
+    <artifactId>b1-core-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>b1-monolito-modular</name>
+    <name>b1-microservice-core</name>
     <description>Evolucao didatica com Usuario, Assinatura, Curso e Matricula</description>
 
     <parent>
@@ -72,3 +72,4 @@
         </plugins>
     </build>
 </project>
+
