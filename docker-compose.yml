@@ -95,6 +95,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://core-postgres:5432/core_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      RANKING_API_URL: http://ranking:8081
       RANKING_SERVICE_USER: ${RANKING_SERVICE_USER}
       RANKING_SERVICE_PASSWORD: ${RANKING_SERVICE_PASSWORD}
     ports:

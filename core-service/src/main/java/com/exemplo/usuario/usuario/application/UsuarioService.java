@@ -5,6 +5,8 @@ import com.exemplo.usuario.usuario.domain.Usuario;
 import com.exemplo.usuario.usuario.api.UsuarioRequestDTO;
 import com.exemplo.usuario.usuario.api.UsuarioResponseDTO;
 import com.exemplo.usuario.usuario.internal.persistence.UsuarioRepository;
+import com.exemplo.usuario.integracao.ranking.RankingDadosAlteradosEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,13 +20,17 @@ public class UsuarioService {
 
     private final UsuarioRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher eventos;
 
-    // Duas dependencias sao injetadas aqui:
+    // Tres dependencias sao injetadas aqui:
     // 1) UsuarioRepository -> bean criado pelo Spring Data
     // 2) PasswordEncoder -> bean declarado em SecurityConfig
-    public UsuarioService(UsuarioRepository repository, PasswordEncoder passwordEncoder) {
+    // 3) ApplicationEventPublisher -> do proprio Spring, para avisar o Ranking (via RankingSyncListener)
+    public UsuarioService(UsuarioRepository repository, PasswordEncoder passwordEncoder,
+                          ApplicationEventPublisher eventos) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
+        this.eventos = eventos;
     }
 
     public List<UsuarioResponseDTO> listarTodos() {
@@ -61,6 +67,13 @@ public class UsuarioService {
         usuario.vincularAssinatura(assinatura);
 
         Usuario salvo = repository.save(usuario);
+
+        // Publica o evento; o envio de verdade so acontece apos o commit (AFTER_COMMIT).
+        // Assim o usuario novo ja aparece no ranking com 0 pontos, como no monolito.
+        eventos.publishEvent(new RankingDadosAlteradosEvent(
+                salvo.getId(), salvo.getNome(),
+                assinatura.getCursosConcluidosComSucesso(), assinatura.getMoedas()));
+
         return toDTO(salvo);
     }
 

@@ -10,6 +10,8 @@ import com.exemplo.usuario.usuario.internal.persistence.AssinaturaRepository;
 import com.exemplo.usuario.curso.internal.persistence.CursoRepository;
 import com.exemplo.usuario.matricula.internal.persistence.MatriculaRepository;
 import com.exemplo.usuario.usuario.internal.persistence.UsuarioRepository;
+import com.exemplo.usuario.integracao.ranking.RankingDadosAlteradosEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,15 +26,18 @@ public class MatriculaService {
     private final UsuarioRepository usuarioRepository;
     private final CursoRepository cursoRepository;
     private final AssinaturaRepository assinaturaRepository;
+    private final ApplicationEventPublisher eventos;
 
     public MatriculaService(MatriculaRepository matriculaRepository,
                             UsuarioRepository usuarioRepository,
                             CursoRepository cursoRepository,
-                            AssinaturaRepository assinaturaRepository) {
+                            AssinaturaRepository assinaturaRepository,
+                            ApplicationEventPublisher eventos) {
         this.matriculaRepository = matriculaRepository;
         this.usuarioRepository = usuarioRepository;
         this.cursoRepository = cursoRepository;
         this.assinaturaRepository = assinaturaRepository;
+        this.eventos = eventos;
     }
 
     public List<MatriculaResponseDTO> listarPorUsuario(Long usuarioId) {
@@ -77,6 +82,12 @@ public class MatriculaService {
             Assinatura assinatura = assinaturaRepository.findByUsuarioId(matricula.getUsuario().getId())
                     .orElseThrow(() -> new RuntimeException("Assinatura nao encontrada"));
             assinatura.registrarConclusaoComSucesso();
+
+            // Cursos concluidos mudou -> o ranking desse usuario mudou.
+            // O envio ao Ranking Service so acontece apos o commit desta transacao.
+            eventos.publishEvent(new RankingDadosAlteradosEvent(
+                    matricula.getUsuario().getId(), matricula.getUsuario().getNome(),
+                    assinatura.getCursosConcluidosComSucesso(), assinatura.getMoedas()));
         }
 
         return toDTO(matriculaRepository.save(matricula));
