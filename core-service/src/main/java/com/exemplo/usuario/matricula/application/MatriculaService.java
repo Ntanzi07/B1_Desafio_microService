@@ -22,6 +22,9 @@ import java.util.List;
 @Service
 public class MatriculaService {
 
+    // Quantas moedas o usuario ganha ao concluir um curso com nota 10.
+    private static final int MOEDAS_POR_NOTA_MAXIMA = 50;
+
     private final MatriculaRepository matriculaRepository;
     private final UsuarioRepository usuarioRepository;
     private final CursoRepository cursoRepository;
@@ -82,6 +85,10 @@ public class MatriculaService {
             Assinatura assinatura = assinaturaRepository.findByUsuarioId(matricula.getUsuario().getId())
                     .orElseThrow(() -> new RuntimeException("Assinatura nao encontrada"));
             assinatura.registrarConclusaoComSucesso();
+
+            if (matricula.concluidoComNotaMaxima()) {
+                assinatura.adicionarMoedas(MOEDAS_POR_NOTA_MAXIMA);
+            }
 
             // Cursos concluidos mudou -> o ranking desse usuario mudou.
             // O envio ao Ranking Service so acontece apos o commit desta transacao.

@@ -88,6 +88,11 @@ public class Matricula {
     }
 
     // Metodo de dominio que encapsula a regra de aprovacao.
+    // Nota 10: alem do aproveitamento normal, rende moedas (regra de gamificacao).
+    public boolean concluidoComNotaMaxima() {
+        return concluidoComAproveitamento() && this.notaFinal >= 10.0;
+    }
+
     public boolean concluidoComAproveitamento() {
         return StatusMatricula.CONCLUIDO.equals(this.status)
                 && this.notaFinal != null
