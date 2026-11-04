@@ -13,6 +13,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 // Camada: CONFIGURACAO.
 // Regras do Ranking Service:
@@ -26,6 +31,9 @@ public class SecurityConfig {
         http
             // API chamada por outro servico, sem formulario/cookie: CSRF nao se aplica.
             .csrf(csrf -> csrf.disable())
+
+            // Liga o CORS usando o bean corsConfigurationSource() abaixo.
+            .cors(Customizer.withDefaults())
 
             // Sem sessao: cada requisicao do Core manda a credencial de novo (HTTP Basic).
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -63,6 +71,21 @@ public class SecurityConfig {
                 .roles("SERVICE")
                 .build()
         );
+    }
+
+    // CORS: o navegador bloqueia uma pagina de localhost:8080 lendo resposta de localhost:8081,
+    // a menos que o 8081 diga "essa origem pode". So liberamos LEITURA (GET) para o front;
+    // PUT/DELETE continuam sendo chamados pelo Core servidor-a-servidor, onde CORS nao existe.
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${ranking.cors.allowed-origins}") List<String> allowedOrigins) {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedMethods(List.of("GET"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/ranking/**", config);
+        return source;
     }
 
     @Bean

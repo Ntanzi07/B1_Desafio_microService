@@ -73,3 +73,37 @@ async function listarMatriculasUsuario() {
         `<li>${m.id} - ${m.cursoTitulo} | status: ${m.status} | nota: ${m.notaFinal ?? '-'} | bônus: ${m.bonus}</li>`
     ).join("");
 }
+
+// ---------------- Ranking (outro servico) ----------------
+// O ranking NAO vem do Core. A pagina foi servida pelo Core (localhost:8080),
+// mas esta chamada vai para outro processo (localhost:8081).
+// Por serem origens diferentes, o navegador so aceita a resposta
+// se o Ranking Service liberar CORS para http://localhost:8080.
+const RANKING_API = "http://localhost:8081";
+
+async function carregarRanking() {
+    const lista = document.getElementById("ranking");
+    lista.innerHTML = "";
+    try {
+        // fetch simples, SEM o header Authorization do Core:
+        // o GET do ranking e publico, e a credencial admin/123456 nao vale la.
+        const response = await fetch(`${RANKING_API}/api/ranking`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const ranking = await response.json();
+
+        if (ranking.length === 0) {
+            lista.innerHTML = "<li>Ranking vazio (o Core ainda nao enviou dados).</li>";
+            return;
+        }
+        // textContent em vez de innerHTML: o nome vem do usuario e poderia conter HTML.
+        ranking.forEach(r => {
+            const li = document.createElement("li");
+            li.textContent = `${r.nome} | ${r.pontos} pts (cursos: ${r.cursosConcluidos}, moedas: ${r.moedas})`;
+            lista.appendChild(li);
+        });
+    } catch (e) {
+        // Se cair aqui com "Failed to fetch", veja o console (F12):
+        // ou o Ranking esta fora do ar, ou o CORS bloqueou.
+        lista.innerHTML = `<li>Ranking Service indisponivel: ${e.message}</li>`;
+    }
+}
